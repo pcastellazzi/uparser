@@ -1,0 +1,21 @@
+version = 1
+
+[[annotations]]
+SPDX-FileCopyrightText = "Copyright © 2025 Pablo Castellazzi <pablo.castellazzi@icloud.com>"
+SPDX-License-Identifier = "MIT"
+precedence = "override"
+
+path = [
+    ".copier-answers.yml",
+    ".coveragerc",
+    ".gitignore",
+    ".pre-commit-config.yaml",
+    ".python-version",
+    "GNUmakefile",
+    "pyproject.toml",
+    "README.md",
+    "ruff.toml",
+    "src/**",
+    "tests/**",
+    "uv.lock",
+]

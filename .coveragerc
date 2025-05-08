@@ -1,0 +1,15 @@
+[run]
+branch = true
+parallel = true
+plugins = covdefaults
+
+omit =
+  src/uparser/__about__.py
+
+[html]
+show_contexts = true
+skip_covered = false
+skip_empty = true
+
+[report]
+fail_under = 100

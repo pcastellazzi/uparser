@@ -1,0 +1,23 @@
+builtins = ["_"]
+target-version = "py312"
+
+[format]
+docstring-code-format = true
+docstring-code-line-length = 78
+
+[lint]
+fixable = ["ALL"]
+ignore = ["COM", "D"]
+select = ["ALL"]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "PLR2004", # magic numbers on tests are ok
+    "S101",    # assert in tests is ok
+]
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.isort]
+known-first-party = ["uparser"]

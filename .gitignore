@@ -1,0 +1,13 @@
+# build artifacts
+/build
+/dist
+/wheels
+*.egg-info
+
+# python development tools
+/.coverage
+/.venv
+/.uv
+/.*_cache
+*.py[cod]
+__pycache__
