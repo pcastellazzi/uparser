@@ -1,13 +1,11 @@
 # uparser
 
-> Your project's description goes here
+A parser combinator library using a functional approach, sum types and
+generics.
 
 ## Installation:
 
 ```bash
-# for a command line application
-uvx --from https://github.com/pcastellazzi/uparser.git <some-script>
-
 # for a library
 uv add https://github.com/pcastellazzi/uparser.git
 ```

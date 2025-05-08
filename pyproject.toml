@@ -2,8 +2,9 @@
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
-[tool.hatch.version]
-path = "src/uparser/__about__.py"
+[tool.hatch]
+build.targets.wheel.packages = ["src/uparser"]
+version.path = "src/uparser/__about__.py"
 
 [project]
 dynamic = ["version"]
@@ -16,8 +17,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 urls.Documentation = "https://github.com/pcastellazzi/uparser.git#readme"
-urls.Repository = "https://github.com/pcastellazzi/uparser.git"
 urls.Issues = "https://github.com/pcastellazzi/uparser.git/issues"
+urls.Repository = "https://github.com/pcastellazzi/uparser.git"
 
 authors = [
     {name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com"},
@@ -29,10 +30,7 @@ maintainers = [
 classifiers = [
     # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
 
-    "Development Status :: 1 - Planning",
-    # "Development Status :: 2 - Pre-Alpha",
-    # "Development Status :: 3 - Alpha",
-    # "Development Status :: 4 - Beta",
+    "Development Status :: 4 - Beta",
     # "Development Status :: 5 - Production/Stable",
     # "Development Status :: 6 - Mature",
     # "Development Status :: 7 - Inactive",
@@ -48,16 +46,18 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python",
 
-    "Topic :: Utilities",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Text Processing",
 ]
 
 dependencies = []
 
 [dependency-groups]
-dev = ["covdefaults>=2.3", "coverage>=7.7", "pytest>=8.3", "pytest-cov>=6.0"]
+dev = ["covdefaults>=2.3", "coverage>=7.7", "pytest-cov>=6.0", "pytest>=8.3"]
 
 [tool.pytest.ini_options]
-addopts = ["--quiet", "--strict-markers", "-Werror"]
+addopts = ["--doctest-modules", "--quiet", "--strict-markers", "-Werror"]
 
 [tool.uv]
 python-preference = "only-managed"

@@ -13,3 +13,5 @@ skip_empty = true
 
 [report]
 fail_under = 100
+exclude_also =
+  case _:\s+assert_never()
