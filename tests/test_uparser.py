@@ -5,11 +5,11 @@ import pytest
 import uparser as p
 
 TYPES = "Failure", "Success", "Result", "Parser"
-CONSTANTS = ("INFINITY",)
+OTHER = "INFINITY", "parser_hook"
 PARSERS = "atom", "eof", "regexp"
 COMBINATORS = "oneof", "repeat", "sequence"
-SHORTCUTS = "many0", "many1", "optional"
-UTIL = "Reference", "compose_left", "compose_left", "map_failure", "map_success"
+UTIL = "Reference", "compose_left", "compose_left", "map_error", "map_value"
+SHORTCUTS = "many0", "many1", "optional", "tag_error", "tag_value"
 
 
 def assert_decorated[F, S](parser: p.Parser[F, S], *, name: str) -> None:
@@ -18,8 +18,11 @@ def assert_decorated[F, S](parser: p.Parser[F, S], *, name: str) -> None:
 
 
 def test_public_api_visibility() -> None:
-    for export in chain(TYPES, CONSTANTS, PARSERS, COMBINATORS, SHORTCUTS, UTIL):
+    for export in chain(TYPES, OTHER, PARSERS, COMBINATORS, UTIL, SHORTCUTS):
         assert export in p.__all__
+
+    # check for duplicates
+    assert len(p.__all__) == len(set(p.__all__))
 
 
 def test_parsers_should_be_decorated() -> None:
@@ -41,19 +44,15 @@ def test_parsers_should_be_decorated() -> None:
     assert_decorated(
         p.compose_right(p.atom("atom"), p.atom("atom")), name="compose_right"
     )
-    assert_decorated(
-        p.map_failure(p.atom("atom"), lambda _: "atom"), name="map_failure"
-    )
-    assert_decorated(
-        p.map_success(p.atom("atom"), lambda _: "atom"), name="map_success"
-    )
+    assert_decorated(p.map_error(p.atom("atom"), lambda _: "atom"), name="map_error")
+    assert_decorated(p.map_value(p.atom("atom"), lambda _: "atom"), name="map_value")
 
 
-def test_caching_strategy(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_parser_hook(monkeypatch: pytest.MonkeyPatch) -> None:
     def disable_caching[F, S](parser: p.Parser[F, S]) -> p.Parser[F, S]:
         return parser
 
-    # Setting `uparser.cache` is expected behavior. `pytest.MonkeyPatch` is
-    # used to automatically undo the change when this test finishes.
-    monkeypatch.setattr(p, "cache", disable_caching)
+    # Setting `uparser.parser_hook` is expected behavior. `pytest.MonkeyPatch`
+    # is used to automatically undo the change when this test finishes.
+    monkeypatch.setattr(p, "parser_hook", disable_caching)
     assert not hasattr(p.atom("atom"), "cache_info")

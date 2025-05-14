@@ -11,6 +11,10 @@ ignore = ["COM", "D"]
 select = ["ALL"]
 
 [lint.per-file-ignores]
+"examples/**/*.py" = [
+    "INP001", # there is no package or binaries here, only code examples
+    "T201",   # print in code examples is ok
+]
 "tests/**/*.py" = [
     "PLR2004", # magic numbers on tests are ok
     "S101",    # assert in tests is ok
