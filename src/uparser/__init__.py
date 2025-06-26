@@ -3,7 +3,6 @@ Minimalistic parser combinator library using a functional approach, sum types
 and generics. My idea of a test case for the new type hinting features
 introduced in Python 3.12.
 """
-# xTODO: PN calculator example
 # xTODO: ini examplea
 # xTODO: json example
 
@@ -46,7 +45,7 @@ __all__ = (
 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Failure[F]:
     """
     Container for failed results, errors in this context.
@@ -79,7 +78,7 @@ class Failure[F]:
     error: F
 
 
-@dataclass
+@dataclass(frozen=True)
 class Success[S]:
     """
     Container for successful results, values in this context.
@@ -601,39 +600,7 @@ def map_value[F, S, S1](
     )
 
 
-def skip1[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
-    """
-    Generates a parser combining two parsers sequentially. The value produced
-    by the second is discarded.
-
-    Parameters:
-        * one: First parser.
-        * two: Second parser.
-
-    Examples:
-        >>> import uparser as p
-
-        # A parser to match letters followed by numbers and keeping only the
-        # numbers.
-        >>> letters = p.map_error(p.regex(r"[A-Z]+"), lambda e: "letters")
-        >>> numbers = p.map_error(p.regex(r"[0-9]+"), lambda e: "numbers")
-        >>> parser = p.skip1(letters, numbers)
-
-        >>> parser(0, "1234")
-        Failure(index=0, error='letters')
-
-        >>> parser(0, "ABCD")
-        Failure(index=4, error='numbers')
-
-        >>> parser(0, "ABCD1234")
-        Success(index=8, value='ABCD')
-    """
-    return parser_hook(skip1)(
-        bind(one, lambda value1: map_value(two, lambda _: value1))
-    )
-
-
-def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
+def skip1[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
     """
     Generates a parser combining two parsers sequentially. The value produced
     by the first is discarded.
@@ -649,7 +616,7 @@ def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
         # letters.
         >>> letters = p.map_error(p.regex(r"[A-Z]+"), lambda e: "letters")
         >>> numbers = p.map_error(p.regex(r"[0-9]+"), lambda e: "numbers")
-        >>> parser = p.skip2(letters, numbers)
+        >>> parser = p.skip1(letters, numbers)
 
         >>> parser(0, "1234")
         Failure(index=0, error='letters')
@@ -660,7 +627,39 @@ def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
         >>> parser(0, "ABCD1234")
         Success(index=8, value='1234')
     """
-    return parser_hook(skip2)(bind(one, lambda _: two))
+    return parser_hook(skip1)(bind(one, lambda _: two))
+
+
+def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
+    """
+    Generates a parser combining two parsers sequentially. The value produced
+    by the second is discarded.
+
+    Parameters:
+        * one: First parser.
+        * two: Second parser.
+
+    Examples:
+        >>> import uparser as p
+
+        # A parser to match letters followed by numbers and keeping only the
+        # numbers.
+        >>> letters = p.map_error(p.regex(r"[A-Z]+"), lambda e: "letters")
+        >>> numbers = p.map_error(p.regex(r"[0-9]+"), lambda e: "numbers")
+        >>> parser = p.skip2(letters, numbers)
+
+        >>> parser(0, "1234")
+        Failure(index=0, error='letters')
+
+        >>> parser(0, "ABCD")
+        Failure(index=4, error='numbers')
+
+        >>> parser(0, "ABCD1234")
+        Success(index=8, value='ABCD')
+    """
+    return parser_hook(skip2)(
+        bind(one, lambda value1: map_value(two, lambda _: value1))
+    )
 
 
 def many0[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
