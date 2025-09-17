@@ -34,13 +34,13 @@ def token[S](parser: p.Parser[str, S]) -> p.Parser[str, S]:
 
 
 number = p.regex(r"[+-]?\d+(\.\d+)?([eE][+-]?\d+)?")
-number = p.set_error(number, "expected a number")
 number = p.map_value(number, float)
+number = p.set_error(number, "expected a number")
 number = token(number)
 
 operator = p.choice(*[p.atom(o) for o in OPERATORS])
-operator = p.set_error(operator, "expected an operator")
 operator = p.map_value(operator, lambda v: v[0])
+operator = p.set_error(operator, "expected an operator")
 operator = token(operator)
 
 expression: p.Reference[str, float | str] = p.Reference()
@@ -54,6 +54,7 @@ expression.set(expression_decl)
 parser = p.skip1(whitespace, expression)
 parser = p.skip2(parser, whitespace)
 parser = p.map_value(p.sequence(parser, p.eof()), lambda v: v[0])
+parser = p.set_error(parser, "expected an expression")
 
 
 def calculate(equation: str) -> float:

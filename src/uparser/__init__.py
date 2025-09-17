@@ -112,7 +112,8 @@ class Success[S]:
 
 
 type State[F, S] = Failure[F] | Success[S]
-type Parser[F, S] = Callable[[int, str], State[F, S]]
+type Parser[F, S] = "Callable[[int, str], State[F, S]]"
+
 
 INFINITY = maxsize
 """Sentinel value for infinite repetitions."""

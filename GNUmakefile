@@ -37,8 +37,15 @@ test:
 	uv run -- pytest $(PYTEST_SETTINGS)
 
 
+.PHONY: update-dependencies
+update-dependencies:
+	uv sync --upgrade
+	uvx pre-commit autoupdate
+
+
 .PHONY: integration
 integration: $(PYTHON_VERSIONS)
+
 
 .PHONY: $(PYTHON_VERSIONS)
 $(PYTHON_VERSIONS):

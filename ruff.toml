@@ -11,11 +11,11 @@ ignore = ["COM", "D"]
 select = ["ALL"]
 
 [lint.per-file-ignores]
-"examples/**/*.py" = [
-    "INP001", # examples don't package or shebang
+"examples/*.py" = [
+    "INP001", # examples are not packages and don't need a shebang
     "T201",   # print in examples is ok
 ]
-"tests/**/*.py" = [
+"{examples,tests}/**/test_*.py" = [
     "PLR2004", # magic numbers on tests are ok
     "S101",    # assert in tests is ok
 ]
