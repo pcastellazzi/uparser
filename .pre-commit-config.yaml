@@ -1,6 +1,9 @@
+default_language_version:
+  node: 22.20.0 # https://github.com/nodejs/node/issues/60176
+
 repos:
   - repo: https://github.com/google/osv-scanner/
-    rev: "v2.2.2"
+    rev: "v2.2.3"
     hooks:
       - id: osv-scanner
 
@@ -10,18 +13,32 @@ repos:
       - id: gitleaks
 
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.1.1
+    rev: v6.1.2
     hooks:
       - id: reuse-lint-file
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: "0.8.17"
+    rev: "0.9.0"
     hooks:
       - id: uv-lock
       - id: uv-sync
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.13.0"
+    rev: "v0.14.0"
     hooks:
-      - id: ruff
+      - id: ruff-check
       - id: ruff-format
+
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: "v9.2.0"
+    hooks:
+      - id: cspell
+        name: cspell source code
+      - id: cspell
+        name: cspell commit message
+          - --no-must-find-files
+          - --no-progress
+          - --no-summary
+          - --files
+          - .git/COMMIT_EDITMSG
+        stages: [commit-msg]

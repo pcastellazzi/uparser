@@ -21,10 +21,10 @@ urls.Issues = "https://github.com/pcastellazzi/uparser.git/issues"
 urls.Repository = "https://github.com/pcastellazzi/uparser.git"
 
 authors = [
-    {name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com"},
+    { name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com" },
 ]
 maintainers = [
-    {name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com"},
+    { name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com" },
 ]
 
 classifiers = [
@@ -55,9 +55,20 @@ dependencies = []
 
 [dependency-groups]
 dev = ["covdefaults>=2.3", "coverage>=7.7", "pytest-cov>=6.0", "pytest>=8.3"]
+docs = [
+    "mkdocs-material>=9.6.21",
+    "mkdocs>=1.6.1",
+    "mkdocstrings[python]>=0.30.1",
+]
 
 [tool.pytest.ini_options]
-addopts = ["--doctest-modules", "--quiet", "--strict-markers", "-Werror"]
+addopts = [
+    "--doctest-modules",
+    "--quiet",
+    "--strict-config",
+    "--strict-markers",
+    "-Werror",
+]
 
 [tool.uv]
 python-preference = "only-managed"

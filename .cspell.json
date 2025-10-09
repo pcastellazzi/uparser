@@ -1,0 +1,12 @@
+{
+    "files": [
+        "**/*.md",
+        "**/*.py",
+    ],
+
+    "dictionaryDefinitions": [
+        { "name": "workspace", "path": ".cspell.dictionary.txt" }
+    ],
+
+    "dictionaries": [ "workspace" ]
+}
