@@ -1,9 +1,12 @@
 # build artifacts
 /build
 /dist
-/site
 /wheels
 *.egg-info
+
+# documentation
+.pdoc-theme/syntax-highlighting.css
+/docs
 
 # python development tools
 /.coverage

@@ -17,7 +17,13 @@ from functools import cache, wraps
 from re import Pattern
 from re import compile as re_compile
 from sys import maxsize
-from typing import assert_never
+from typing import TYPE_CHECKING, assert_never
+
+if TYPE_CHECKING:  # needed for pdoc
+    from typing import TypeVar
+
+    F = TypeVar("F")
+    S = TypeVar("S")
 
 __all__ = (
     "INFINITY",

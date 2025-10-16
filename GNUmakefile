@@ -7,6 +7,12 @@ PYTHON_VERSIONS = 3.12 3.13
 PYTEST_COVERAGE = --cov=src/ --cov-context=test --cov-report=term-missing
 PYTEST_SETTINGS ?=
 
+PDOC_CODE = src/uparser/
+PDOC_CODE_THEME = .pdoc-theme/syntax-highlighting.css
+
+PDOC_SETTINGS = --docformat google --template-directory .pdoc-theme/
+PDOC_ACTION ?= --output-directory docs/
+
 
 .PHONY: all
 all: install check coverage integration docs
@@ -38,8 +44,13 @@ test:
 
 
 .PHONY: docs
-docs:
-	uv run -- mkdocs build --clean
+docs: $(PDOC_CODE_THEME)
+	rm -rf docs/
+	uv run --group docs pdoc $(PDOC_SETTINGS) $(PDOC_ACTION) $(PDOC_CODE)
+
+$(PDOC_CODE_THEME):
+	uv run --group docs pygmentize -f html -a .pdoc-code -S monokai >$(PDOC_CODE_THEME)
+
 
 .PHONY: update-dependencies
 update-dependencies:

@@ -1,3 +1,0 @@
-# uparser
-
-* [Reference](reference.md)
