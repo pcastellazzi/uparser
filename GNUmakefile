@@ -2,7 +2,7 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 PYTHON_CODE = src/ tests/
-PYTHON_VERSIONS = 3.12 3.13 
+PYTHON_VERSIONS = 3.12 3.13 3.14
 
 PYTEST_COVERAGE = --cov=src/ --cov-context=test --cov-report=term-missing
 PYTEST_SETTINGS =
