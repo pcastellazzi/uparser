@@ -2,7 +2,7 @@
 This is the "Hello World" of parsing, a calculator using polish notation
 <https://en.wikipedia.org/wiki/Polish_notation>.
 
-Basic math operations like addition, substraction, multiplication and division
+Basic math operations like addition, subtraction, multiplication and division
 are implemented over floating point (as in python's float) numbers.
 """
 

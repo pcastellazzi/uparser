@@ -15,7 +15,7 @@ uv add https://github.com/pcastellazzi/uparser.git
 ```bash
 git clone https://github.com/pcastellazzi/uparser.git
 cd uparser
-uvx pre-commit install
+uvx pre-commit install --hook-type commit-msg --hook-type pre-commit
 ```
 
 ## Tasks:

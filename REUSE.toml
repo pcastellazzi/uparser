@@ -1,3 +1,5 @@
+#:schema https://reuse.software/reuse-toml-v1.schema.json
+
 version = 1
 
 [[annotations]]
@@ -8,11 +10,15 @@ precedence = "override"
 path = [
     ".copier-answers.yml",
     ".coveragerc",
+    ".cspell.dictionary.txt",
+    ".cspell.json",
     ".gitignore",
+    ".pdoc-theme/**",
     ".pre-commit-config.yaml",
     ".python-version",
     "GNUmakefile",
     "README.md",
+    "conftest.py",
     "examples/**",
     "pyproject.toml",
     "ruff.toml",

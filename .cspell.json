@@ -1,0 +1,20 @@
+{
+    "files": [
+        "**/*.md",
+        "**/*.py"
+    ],
+
+    "dictionaryDefinitions": [
+        { "name": "user", "path": "~/.cspell.dictionary.txt" },
+        { "name": "workspace", "path": ".cspell.dictionary.txt" }
+    ],
+
+    "dictionaries": [
+        "user",
+        "workspace",
+        "wordEn",
+        "companies",
+        "softwareTerms",
+        "python"
+    ]
+}

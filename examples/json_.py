@@ -6,7 +6,9 @@ import uparser as p
 type JSONValue = "None | bool | float | str | list[JSONValue] | dict[str, JSONValue]"
 
 RE_NUMBER = re.compile(r"[-]?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
-RE_STRING = re.compile(r'"(?:[^"\\\x00-\x1F]|\\["\\/bfnrt]|\\u[a-fA-F0-9]{4})*"')
+RE_STRING = re.compile(
+    r'"(?:[^"\\\x00-\x1F]|\\["\\/bfnrt]|\\u[a-fA-F0-9]{4})*"'
+)  # cspell:ignore bfnrt
 RE_WHITESPACE = re.compile(r"[\n\r\t ]*")
 
 whitespace = p.set(p.regex(RE_WHITESPACE), "whitespace", "whitespace")
