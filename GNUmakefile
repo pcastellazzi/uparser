@@ -30,7 +30,7 @@ install:
 
 .PHONY: check
 check:
-	uvx pre-commit run --all-files
+	prek run --all-files
 
 
 .PHONY: coverage
@@ -55,7 +55,7 @@ $(PDOC_CODE_THEME):
 .PHONY: update-dependencies
 update-dependencies:
 	uv sync --all-groups --upgrade
-	uvx pre-commit autoupdate
+	prek autoupdate
 
 
 .PHONY: integration
