@@ -17,7 +17,7 @@ from functools import cache, wraps
 from re import Pattern
 from re import compile as re_compile
 from sys import maxsize
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING, assert_never, final
 
 if TYPE_CHECKING:  # needed for pdoc
     from typing import TypeVar
@@ -57,6 +57,7 @@ INFINITY = maxsize
 """Sentinel value for infinite repetitions."""
 
 
+@final
 @dataclass(frozen=True)
 class Failure[F]:
     """
@@ -88,6 +89,7 @@ class Failure[F]:
     error: F
 
 
+@final
 @dataclass(frozen=True)
 class Success[S]:
     """
@@ -555,9 +557,11 @@ def map_error[F, F1, S](
     return parser_hook(map_error)(
         map(
             element,
-            lambda state: Failure(state.index, mapper(state.error))
-            if isinstance(state, Failure)
-            else state,
+            lambda state: (
+                Failure(state.index, mapper(state.error))
+                if isinstance(state, Failure)
+                else state
+            ),
         )
     )
 
@@ -584,9 +588,11 @@ def map_value[F, S, S1](
     return parser_hook(map_value)(
         map(
             element,
-            lambda state: Success(state.index, mapper(state.value))
-            if isinstance(state, Success)
-            else state,
+            lambda state: (
+                Success(state.index, mapper(state.value))
+                if isinstance(state, Success)
+                else state
+            ),
         )
     )
 
