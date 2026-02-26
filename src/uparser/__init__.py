@@ -27,6 +27,8 @@ if TYPE_CHECKING:  # needed for pdoc
 
 # Custom order, used by pdoc
 __all__ = (  # noqa: RUF022
+    # Constants
+    "INFINITY",
     # Types
     "Failure",
     "Success",
@@ -36,13 +38,13 @@ __all__ = (  # noqa: RUF022
     "atom",
     "eof",
     "regex",
-    # Core combinators
+    # Combinators
     "bind",
     "map",
     "choice",
     "repeat",
     "sequence",
-    # Extended combinators
+    # Shortcuts
     "many0",
     "many1",
     "map_error",
@@ -58,7 +60,7 @@ __all__ = (  # noqa: RUF022
     "Reference",
 )
 
-_INFINITY = maxsize
+INFINITY = maxsize
 """Sentinel value for infinite repetitions."""
 
 
@@ -497,7 +499,7 @@ def many0[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
         >>> parser(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
     """
-    return parser_hook(many0)(repeat(element, 0, _INFINITY))
+    return parser_hook(many0)(repeat(element, 0, INFINITY))
 
 
 def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
@@ -515,7 +517,7 @@ def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
         >>> parser(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
     """
-    return parser_hook(many1)(repeat(element, 1, _INFINITY))
+    return parser_hook(many1)(repeat(element, 1, INFINITY))
 
 
 def optional[F, S, S1](element: Parser[F, S], *, default: S) -> Parser[F, S]:
