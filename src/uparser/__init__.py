@@ -25,35 +25,40 @@ if TYPE_CHECKING:  # needed for pdoc
     F = TypeVar("F")
     S = TypeVar("S")
 
-__all__ = (
-    "INFINITY",
+# Custom order, used by pdoc
+__all__ = (  # noqa: RUF022
+    # Types
     "Failure",
-    "Parser",
-    "Reference",
-    "State",
     "Success",
+    "Parser",
+    "State",
+    # Parsers
     "atom",
-    "bind",
-    "choice",
     "eof",
+    "regex",
+    # Core combinators
+    "bind",
+    "map",
+    "choice",
+    "repeat",
+    "sequence",
+    # Extended combinators
     "many0",
     "many1",
-    "map",
     "map_error",
     "map_value",
     "optional",
-    "parser_hook",
-    "regex",
-    "repeat",
-    "sequence",
     "set",
     "set_error",
     "set_value",
     "skip1",
     "skip2",
+    # Utilities
+    "parser_hook",
+    "Reference",
 )
 
-INFINITY = maxsize
+_INFINITY = maxsize
 """Sentinel value for infinite repetitions."""
 
 
@@ -260,6 +265,72 @@ def regex(expression: str | Pattern[str]) -> Parser[str, str]:
     return parser
 
 
+def bind[F, S, S1](
+    element: Parser[F, S], fn: Callable[[S], Parser[F, S1]]
+) -> Parser[F, S1]:
+    """
+    Chain two parsers sequentially, where the second parser is determined by
+    the result of the first.
+
+    Parameters:
+        element: the first parser to apply
+        fn: A function taking a Success and returns a new parser to apply.
+
+    Examples:
+        >>> # Parse a number, then parse that many 'A's.
+        >>> def letter(count: int) -> p.Parser[str, str]:
+        ...     return p.map_value(
+        ...         p.repeat(p.atom("A"), count, count), lambda v: "".join(v)
+        ...     )
+        >>> count = p.map_value(p.regex(r"\\d+"), lambda v: int(v))
+        >>> parser = p.bind(count, letter)
+        >>> parser(0, "3AAA")
+        Success(index=4, value='AAA')
+        >>> parser(0, "#AAA")
+        Failure(index=0, error='\\\\d+')
+        >>> parser(0, "3AAB")
+        Failure(index=3, error='A')
+    """
+
+    @parser_hook(bind)
+    def parser(index: int, text: str) -> State[F, S1]:
+        state = element(index, text)
+        if isinstance(state, Success):
+            return fn(state.value)(state.index, text)
+        return state
+
+    return parser
+
+
+def map[F, S, F1, S1](  # noqa: A001
+    element: Parser[F, S], fn: Callable[[State[F, S]], State[F1, S1]]
+) -> Parser[F1, S1]:
+    """
+    Alters the state of a parser using a transformation function.
+
+    Parameters:
+        element: The parser whose state will be transformed.
+        fn: The transformation function.
+
+    Examples:
+        >>> def str2int(state: p.State[str, str]) -> p.State[str, int]:
+        ...     if isinstance(state, p.Success):
+        ...         return p.Success(state.index, int(state.value))
+        ...     return state
+        >>> number = p.map(p.regex(r"\\d+"), str2int)
+        >>> number(0, "123")
+        Success(index=3, value=123)
+        >>> number(0, "abc")
+        Failure(index=0, error='\\\\d+')
+    """
+
+    @parser_hook(map)
+    def parser(index: int, text: str) -> State[F1, S1]:
+        return fn(element(index, text))
+
+    return parser
+
+
 def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
     """
     A parser for an ordered choice.
@@ -426,7 +497,7 @@ def many0[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
         >>> parser(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
     """
-    return parser_hook(many0)(repeat(element, 0, INFINITY))
+    return parser_hook(many0)(repeat(element, 0, _INFINITY))
 
 
 def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
@@ -444,7 +515,7 @@ def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
         >>> parser(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
     """
-    return parser_hook(many1)(repeat(element, 1, INFINITY))
+    return parser_hook(many1)(repeat(element, 1, _INFINITY))
 
 
 def optional[F, S, S1](element: Parser[F, S], *, default: S) -> Parser[F, S]:
@@ -467,72 +538,6 @@ def optional[F, S, S1](element: Parser[F, S], *, default: S) -> Parser[F, S]:
     return parser_hook(optional)(
         map_value(repeat(element, 0, 1), lambda v: v[0] if v else default)
     )
-
-
-def bind[F, S, S1](
-    element: Parser[F, S], fn: Callable[[S], Parser[F, S1]]
-) -> Parser[F, S1]:
-    """
-    Chain two parsers sequentially, where the second parser is determined by
-    the result of the first.
-
-    Parameters:
-        element: the first parser to apply
-        fn: A function taking a Success and returns a new parser to apply.
-
-    Examples:
-        >>> # Parse a number, then parse that many 'A's.
-        >>> def letter(count: int) -> p.Parser[str, str]:
-        ...     return p.map_value(
-        ...         p.repeat(p.atom("A"), count, count), lambda v: "".join(v)
-        ...     )
-        >>> count = p.map_value(p.regex(r"\\d+"), lambda v: int(v))
-        >>> parser = p.bind(count, letter)
-        >>> parser(0, "3AAA")
-        Success(index=4, value='AAA')
-        >>> parser(0, "#AAA")
-        Failure(index=0, error='\\\\d+')
-        >>> parser(0, "3AAB")
-        Failure(index=3, error='A')
-    """
-
-    @parser_hook(bind)
-    def parser(index: int, text: str) -> State[F, S1]:
-        state = element(index, text)
-        if isinstance(state, Success):
-            return fn(state.value)(state.index, text)
-        return state
-
-    return parser
-
-
-def map[F, S, F1, S1](  # noqa: A001
-    element: Parser[F, S], fn: Callable[[State[F, S]], State[F1, S1]]
-) -> Parser[F1, S1]:
-    """
-    Alters the state of a parser using a transformation function.
-
-    Parameters:
-        element: The parser whose state will be transformed.
-        fn: The transformation function.
-
-    Examples:
-        >>> def str2int(state: p.State[str, str]) -> p.State[str, int]:
-        ...     if isinstance(state, p.Success):
-        ...         return p.Success(state.index, int(state.value))
-        ...     return state
-        >>> number = p.map(p.regex(r"\\d+"), str2int)
-        >>> number(0, "123")
-        Success(index=3, value=123)
-        >>> number(0, "abc")
-        Failure(index=0, error='\\\\d+')
-    """
-
-    @parser_hook(map)
-    def parser(index: int, text: str) -> State[F1, S1]:
-        return fn(element(index, text))
-
-    return parser
 
 
 def map_error[F, F1, S](
