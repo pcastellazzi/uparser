@@ -65,7 +65,7 @@ INFINITY = maxsize
 
 
 @final
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Failure[F]:
     """
     Container for failed results, errors in this context.
@@ -97,7 +97,7 @@ class Failure[F]:
 
 
 @final
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Success[S]:
     """
     Container for successful results, values in this context.
@@ -297,9 +297,11 @@ def bind[F, S, S1](
     @parser_hook(bind)
     def parser(index: int, text: str) -> State[F, S1]:
         state = element(index, text)
-        if isinstance(state, Success):
-            return fn(state.value)(state.index, text)
-        return state
+        match state:
+            case Success(index, value):
+                return fn(value)(index, text)
+            case Failure():
+                return state
 
     return parser
 
@@ -364,10 +366,11 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
         failures: list[F] = []
         for option in options:
             state = option(index, text)
-            if isinstance(state, Failure):
-                failures.append(state.error)
-            else:
-                return state
+            match state:
+                case Failure(_, error):
+                    failures.append(error)
+                case Success():
+                    return state
         return Failure(index, failures)
 
     return parser
@@ -473,11 +476,12 @@ def sequence[F, S](*elements: Parser[F, S]) -> Parser[F, list[S]]:
 
         for element in elements:
             state = element(current_index, text)
-            if isinstance(state, Success):
-                current_index = state.index
-                successes.append(state.value)
-            else:
-                return state
+            match state:
+                case Success(index, value):
+                    current_index = index
+                    successes.append(value)
+                case Failure():
+                    return state
 
         return Success(current_index, successes)
 
