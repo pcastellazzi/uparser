@@ -16,7 +16,7 @@ select = ["ALL"]
     "T201",   # print in examples is ok
 ]
 "{examples,tests}/**/test_*.py" = [
-    "PLR2004", # magic numbers on tests are ok
+    "PLR2004", # magic numbers in tests are ok
     "S101",    # assert in tests is ok
 ]
 
