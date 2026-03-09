@@ -59,7 +59,7 @@ pair: p.Parser[str, tuple[str, JSONValue]] = p.map_value(
     lambda v: (typing.cast("str", v[0]), v[1]),
 )
 object_ = between(comma_separated_list(pair), left="{", right="}")
-object_ = p.map_value(object_, lambda v: dict(v))
+object_ = p.map_value(object_, dict)
 
 json_value_def = p.choice(null, true, false, number, string, array, object_)
 json_value_def = p.set_error(json_value_def, "expected a JSON object")

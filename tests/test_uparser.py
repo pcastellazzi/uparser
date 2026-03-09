@@ -5,22 +5,34 @@ import pytest
 
 import uparser as p
 
+CONSTANTS = ("INFINITY",)
 TYPES = "Failure", "Success", "State", "Parser"
-OTHER = "INFINITY", "parser_hook", "map", "bind"
 PARSERS = "atom", "eof", "regex"
-COMBINATORS = "choice", "repeat", "sequence"
-SHORTCUTS = "many0", "many1", "optional", "set", "set_error", "set_value"
-UTIL = "Reference", "map_error", "map_value", "skip1", "skip2"
+COMBINATORS = "bind", "map", "choice", "repeat", "sequence"
+SHORTCUTS = (
+    "many0",
+    "many1",
+    "map_error",
+    "map_value",
+    "optional",
+    "set",
+    "set_error",
+    "set_value",
+    "skip1",
+    "skip2",
+)
+UTIL = "parser_hook", "Reference"
 
 
 def assert_decorated[F, S](parser: p.Parser[F, S], *, name: str) -> None:
-    assert hasattr(parser, "cache_info")  # functools.cache applied correctly
-    assert hasattr(parser, "__name__")  # functools.wraps applied correctly
-    assert parser.__name__ == name  # functools.wraps applied correctly
+    # functools.wraps applied correctly
+    assert getattr(parser, "__name__", "<unknown>") == name
+    # functools.cache applied correctly
+    assert hasattr(parser, "cache_info")
 
 
 def test_public_api_visibility() -> None:
-    for export in chain(TYPES, OTHER, PARSERS, COMBINATORS, SHORTCUTS, UTIL):
+    for export in chain(CONSTANTS, TYPES, PARSERS, COMBINATORS, SHORTCUTS, UTIL):
         assert export in p.__all__
 
 
