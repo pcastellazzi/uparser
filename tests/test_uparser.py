@@ -14,8 +14,9 @@ UTIL = "Reference", "map_error", "map_value", "skip1", "skip2"
 
 
 def assert_decorated[F, S](parser: p.Parser[F, S], *, name: str) -> None:
-    assert parser.__name__ == name  # functools.wraps applied correctly
     assert hasattr(parser, "cache_info")  # functools.cache applied correctly
+    assert hasattr(parser, "__name__")  # functools.wraps applied correctly
+    assert parser.__name__ == name  # functools.wraps applied correctly
 
 
 def test_public_api_visibility() -> None:
