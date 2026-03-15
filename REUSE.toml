@@ -1,5 +1,4 @@
 #:schema https://reuse.software/reuse-toml-v1.schema.json
-
 version = 1
 
 [[annotations]]
@@ -14,15 +13,15 @@ path = [
     ".cspell.json",
     ".gitignore",
     ".pdoc-theme/**",
-    ".pre-commit-config.yaml",
     ".python-version",
-    "GNUmakefile",
-    "README.md",
     "conftest.py",
     "examples/**",
+    "GNUmakefile",
+    "prek.toml",
     "pyproject.toml",
+    "README.md",
     "ruff.toml",
-    "src/**",
-    "tests/**",
+    "src/**/*.py",
+    "tests/**/*.py",
     "uv.lock",
 ]
