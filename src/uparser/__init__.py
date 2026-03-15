@@ -301,6 +301,8 @@ def bind[F, S, S1](
                 return fn(value)(index, text)
             case Failure() as failure:
                 return failure
+            case _ as other:
+                assert_never(other)
 
     return parser
 
@@ -369,6 +371,9 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
                     failures.append(error)
                 case Success() as success:
                     return success
+                case _ as other:
+                    assert_never(other)
+
         return Failure(index, failures)
 
     return parser
@@ -433,6 +438,8 @@ def repeat[F, S](
                     if iterations >= minimum:
                         break
                     return failure
+                case _ as other:
+                    assert_never(other)
 
         return Success(index, values)
 
@@ -477,6 +484,8 @@ def sequence[F, S](*elements: Parser[F, S]) -> Parser[F, list[S]]:
                     successes.append(value)
                 case Failure() as failure:
                     return failure
+                case _ as other:
+                    assert_never(other)
 
         return Success(current_index, successes)
 
@@ -567,6 +576,8 @@ def map_error[F, F1, S](
                 return Failure(index, mapper(error))
             case Success() as success:
                 return success
+            case _ as other:
+                assert_never(other)
 
     return parser_hook(map_error)(map(element, wrapper))
 
@@ -597,6 +608,8 @@ def map_value[F, S, S1](
                 return Success(index, mapper(value))
             case Failure() as failure:
                 return failure
+            case _ as other:
+                assert_never(other)
 
     return parser_hook(map_value)(map(element, wrapper))
 
