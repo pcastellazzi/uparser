@@ -20,11 +20,9 @@ urls.Documentation = "https://github.com/pcastellazzi/uparser.git#readme"
 urls.Issues = "https://github.com/pcastellazzi/uparser.git/issues"
 urls.Repository = "https://github.com/pcastellazzi/uparser.git"
 
-authors = [
-    { name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com" },
-]
+authors = [{name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com"}]
 maintainers = [
-    { name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com" },
+    {name = "Pablo Castellazzi", email = "pablo.castellazzi@icloud.com"},
 ]
 
 classifiers = [
@@ -56,7 +54,6 @@ dependencies = []
 
 [dependency-groups]
 dev = ["covdefaults>=2.3", "coverage>=7.7", "pytest-cov>=7.0", "pytest>=9.0"]
-docs = ["pdoc>=15.0"]
 
 [tool.pytest.ini_options]
 addopts = [

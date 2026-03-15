@@ -1,17 +1,11 @@
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
-PYTHON_CODE = src/ tests/
+PYTHON_CODE = src/ tests/ examples/
 PYTHON_VERSIONS = 3.12 3.13 3.14
 
 PYTEST_COVERAGE = --cov=src/ --cov-context=test --cov-report=term-missing
 PYTEST_SETTINGS ?=
-
-PDOC_CODE = src/uparser/
-PDOC_CODE_THEME = .pdoc-theme/syntax-highlighting.css
-
-PDOC_SETTINGS = --docformat google --template-directory .pdoc-theme/
-PDOC_ACTION ?= --output-directory docs/
 
 
 .PHONY: all
@@ -43,31 +37,10 @@ test:
 	uv run -- pytest $(PYTEST_SETTINGS) $(PYTHON_CODE)
 
 
-.PHONY: docs
-docs: $(PDOC_CODE_THEME)
-	rm -rf docs/
-	uv run --group docs pdoc $(PDOC_SETTINGS) $(PDOC_ACTION) $(PDOC_CODE)
-
-$(PDOC_CODE_THEME):
-	uv run --group docs pygmentize -f html -a .pdoc-code -S monokai >$(PDOC_CODE_THEME)
-
-
 .PHONY: update-dependencies
 update-dependencies:
 	uv sync --all-groups --upgrade
 	prek autoupdate
-
-
-# Only Microsoft's Pyright (VSCode) is capable of correctly type checking the
-# code (as of 2026.03.08). astral's ty is allmost there, but match stament
-# support is not complete. See: https://github.com/astral-sh/ty/issues/2742
-#
-# Others:
-# * mypy fails to understand the signature of parser_hook
-# * pyre does not understand type variables in most cases
-.PHONY: typecheck
-typecheck:
-	uvx ty check --error all $(PYTHON_CODE)
 
 
 .PHONY: integration
