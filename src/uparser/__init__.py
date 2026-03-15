@@ -28,6 +28,7 @@ if TYPE_CHECKING:  # needed for pdoc
 # Custom order, used by pdoc
 __all__ = (  # noqa: RUF022
     # Constants
+    "EOF",
     "INFINITY",
     # Types
     "Failure",
@@ -40,23 +41,24 @@ __all__ = (  # noqa: RUF022
     "regex",
     # Combinators
     "bind",
-    "map",
     "choice",
     "repeat",
     "sequence",
+    "transform",
     # Shortcuts
     "many0",
     "many1",
     "map_error",
     "map_value",
-    "optional",
+    "option",
     "set",
     "set_error",
     "set_value",
-    "skip1",
-    "skip2",
+    "skip_left",
+    "skip_right",
     # Utilities
     "parser_hook",
+    "run",
     "Reference",
 )
 
@@ -174,6 +176,34 @@ def parser_hook[F, S](
     return lambda parser: wraps(caller)(cache(parser))
 
 
+def run[F, S](element: Parser[F, S], text: str) -> S:
+    """
+    Run a parser on the given text, returning the value on success or raising
+    `ValueError` on failure.
+
+    Parameters:
+        element: Parser to run.
+        text: Input text to parse.
+
+    Examples:
+        >>> p.run(p.atom("A"), "A")
+        'A'
+
+        >>> p.run(p.atom("A"), "B")
+        Traceback (most recent call last):
+        ...
+        ValueError: Error: A at position 0
+    """
+    match element(0, text):
+        case Success(_, value):
+            return value
+        case Failure(index, error):
+            message = f"Error: {error} at position {index}"
+            raise ValueError(message)
+        case _ as other:
+            assert_never(other)
+
+
 def atom(expected: str) -> Parser[str, str]:
     """
     A parser for a text literal.
@@ -226,6 +256,10 @@ def eof() -> Parser[str, str]:
         return Failure(index, "")
 
     return parser
+
+
+EOF: Parser[str, str] = eof()
+"""Pre-built parser for end-of-input. Equivalent to ``eof()``."""
 
 
 def regex(expression: str | Pattern[str]) -> Parser[str, str]:
@@ -303,35 +337,6 @@ def bind[F, S, S1](
                 return failure
             case _ as other:
                 assert_never(other)
-
-    return parser
-
-
-def map[F, S, F1, S1](  # noqa: A001
-    element: Parser[F, S], fn: Callable[[State[F, S]], State[F1, S1]]
-) -> Parser[F1, S1]:
-    """
-    Alters the state of a parser using a transformation function.
-
-    Parameters:
-        element: The parser whose state will be transformed.
-        fn: The transformation function.
-
-    Examples:
-        >>> def str2int(state: p.State[str, str]) -> p.State[str, int]:
-        ...     if isinstance(state, p.Success):
-        ...         return p.Success(state.index, int(state.value))
-        ...     return state
-        >>> number = p.map(p.regex(r"\\d+"), str2int)
-        >>> number(0, "123")
-        Success(index=3, value=123)
-        >>> number(0, "abc")
-        Failure(index=0, error='\\\\d+')
-    """
-
-    @parser_hook(map)
-    def parser(index: int, text: str) -> State[F1, S1]:
-        return fn(element(index, text))
 
     return parser
 
@@ -502,6 +507,35 @@ def sequence[F, S](*elements: Parser[F, S]) -> Parser[F, list[S]]:
     return parser
 
 
+def transform[F, S, F1, S1](
+    element: Parser[F, S], fn: Callable[[State[F, S]], State[F1, S1]]
+) -> Parser[F1, S1]:
+    """
+    Alters the state of a parser using a transformation function.
+
+    Parameters:
+        element: The parser whose state will be transformed.
+        fn: The transformation function.
+
+    Examples:
+        >>> def str2int(state: p.State[str, str]) -> p.State[str, int]:
+        ...     if isinstance(state, p.Success):
+        ...         return p.Success(state.index, int(state.value))
+        ...     return state
+        >>> number = p.transform(p.regex(r"\\d+"), str2int)
+        >>> number(0, "123")
+        Success(index=3, value=123)
+        >>> number(0, "abc")
+        Failure(index=0, error='\\\\d+')
+    """
+
+    @parser_hook(transform)
+    def parser(index: int, text: str) -> State[F1, S1]:
+        return fn(element(index, text))
+
+    return parser
+
+
 def many0[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
     """
     Repeat a parser zero or more times.
@@ -538,24 +572,24 @@ def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
     return parser_hook(many1)(repeat(element, 1, INFINITY))
 
 
-def optional[F, S, S1](element: Parser[F, S], *, default: S) -> Parser[F, S]:
+def option[F, S](element: Parser[F, S], *, default: S) -> Parser[F, S]:
     """
-    Repeat a parser zero or one time.
+    Try a parser, returning a default value if it does not match.
 
     Parameters:
-        element: Parser to repeat.
+        element: Parser to try.
         default: Value to use if the parser did not match.
 
     Examples:
         >>> # A parser to match an optional "A".
-        >>> parser = p.optional(p.atom("A"), default="<default>")
+        >>> parser = p.option(p.atom("A"), default="<default>")
         >>> parser(0, "BBBB")
         Success(index=0, value='<default>')
         >>> parser(0, "AAAA")
         Success(index=1, value='A')
     """
 
-    return parser_hook(optional)(
+    return parser_hook(option)(
         map_value(repeat(element, 0, 1), lambda v: v[0] if v else default)
     )
 
@@ -589,7 +623,7 @@ def map_error[F, F1, S](
             case _ as other:
                 assert_never(other)
 
-    return parser_hook(map_error)(map(element, wrapper))
+    return parser_hook(map_error)(transform(element, wrapper))
 
 
 def map_value[F, S, S1](
@@ -621,7 +655,7 @@ def map_value[F, S, S1](
             case _ as other:
                 assert_never(other)
 
-    return parser_hook(map_value)(map(element, wrapper))
+    return parser_hook(map_value)(transform(element, wrapper))
 
 
 def set[F, S, F1, S1](element: Parser[F, S], error: F1, value: S1) -> Parser[F1, S1]:  # noqa: A001
@@ -652,7 +686,7 @@ def set[F, S, F1, S1](element: Parser[F, S], error: F1, value: S1) -> Parser[F1,
             case _ as other:
                 assert_never(other)
 
-    return parser_hook(set)(map(element, mapper))
+    return parser_hook(set)(transform(element, mapper))
 
 
 def set_error[F, F1, S](element: Parser[F, S], error: F1) -> Parser[F1, S]:
@@ -695,35 +729,10 @@ def set_value[F, S, S1](element: Parser[F, S], value: S1) -> Parser[F, S1]:
     return parser_hook(set_value)(map_value(element, lambda _: value))
 
 
-def skip1[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
+def skip_left[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
     """
     Generates a parser combining two parsers sequentially. The value produced
-    by the first is discarded.
-
-    Parameters:
-        one: First parser.
-        two: Second parser.
-
-    Examples:
-        >>> # A parser to match letters followed by numbers and keeping only
-        >>> # the letters.
-        >>> letters = p.map_error(p.regex(r"[A-Z]+"), lambda e: "letters")
-        >>> numbers = p.map_error(p.regex(r"[0-9]+"), lambda e: "numbers")
-        >>> parser = p.skip1(letters, numbers)
-        >>> parser(0, "1234")
-        Failure(index=0, error='letters')
-        >>> parser(0, "ABCD")
-        Failure(index=4, error='numbers')
-        >>> parser(0, "ABCD1234")
-        Success(index=8, value='1234')
-    """
-    return parser_hook(skip1)(bind(one, lambda _: two))
-
-
-def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
-    """
-    Generates a parser combining two parsers sequentially. The value produced
-    by the second is discarded.
+    by the first (left) is discarded.
 
     Parameters:
         one: First parser.
@@ -734,7 +743,32 @@ def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
         >>> # the numbers.
         >>> letters = p.map_error(p.regex(r"[A-Z]+"), lambda e: "letters")
         >>> numbers = p.map_error(p.regex(r"[0-9]+"), lambda e: "numbers")
-        >>> parser = p.skip2(letters, numbers)
+        >>> parser = p.skip_left(letters, numbers)
+        >>> parser(0, "1234")
+        Failure(index=0, error='letters')
+        >>> parser(0, "ABCD")
+        Failure(index=4, error='numbers')
+        >>> parser(0, "ABCD1234")
+        Success(index=8, value='1234')
+    """
+    return parser_hook(skip_left)(bind(one, lambda _: two))
+
+
+def skip_right[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
+    """
+    Generates a parser combining two parsers sequentially. The value produced
+    by the second (right) is discarded.
+
+    Parameters:
+        one: First parser.
+        two: Second parser.
+
+    Examples:
+        >>> # A parser to match letters followed by numbers and keeping only
+        >>> # the letters.
+        >>> letters = p.map_error(p.regex(r"[A-Z]+"), lambda e: "letters")
+        >>> numbers = p.map_error(p.regex(r"[0-9]+"), lambda e: "numbers")
+        >>> parser = p.skip_right(letters, numbers)
         >>> parser(0, "1234")
         Failure(index=0, error='letters')
         >>> parser(0, "ABCD")
@@ -742,7 +776,7 @@ def skip2[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
         >>> parser(0, "ABCD1234")
         Success(index=8, value='ABCD')
     """
-    return parser_hook(skip2)(
+    return parser_hook(skip_right)(
         bind(one, lambda value1: map_value(two, lambda _: value1))
     )
 

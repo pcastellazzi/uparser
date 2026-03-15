@@ -8,18 +8,18 @@ import uparser as p
 CONSTANTS = ("INFINITY",)
 TYPES = "Failure", "Success", "State", "Parser"
 PARSERS = "atom", "eof", "regex"
-COMBINATORS = "bind", "map", "choice", "repeat", "sequence"
+COMBINATORS = "bind", "transform", "choice", "repeat", "sequence"
 SHORTCUTS = (
     "many0",
     "many1",
     "map_error",
     "map_value",
-    "optional",
+    "option",
     "set",
     "set_error",
     "set_value",
-    "skip1",
-    "skip2",
+    "skip_left",
+    "skip_right",
 )
 UTIL = "parser_hook", "Reference"
 
@@ -38,7 +38,7 @@ def test_public_api_visibility() -> None:
 
 def test_parsers_should_be_decorated() -> None:
     assert_decorated(p.bind(p.atom("atom"), lambda _: p.atom("atom2")), name="bind")
-    assert_decorated(p.map(p.atom("atom"), lambda s: s), name="map")
+    assert_decorated(p.transform(p.atom("atom"), lambda s: s), name="transform")
 
     assert_decorated(p.atom("atom"), name="atom")
     assert_decorated(p.eof(), name="eof")
@@ -50,15 +50,15 @@ def test_parsers_should_be_decorated() -> None:
 
     assert_decorated(p.many0(p.atom("atom")), name="many0")
     assert_decorated(p.many1(p.atom("atom")), name="many1")
-    assert_decorated(p.optional(p.atom("atom"), default=""), name="optional")
+    assert_decorated(p.option(p.atom("atom"), default=""), name="option")
     assert_decorated(p.set(p.atom("atom"), "", ""), name="set")
     assert_decorated(p.set_error(p.atom("atom"), ""), name="set_error")
     assert_decorated(p.set_value(p.atom("atom"), ""), name="set_value")
 
     assert_decorated(p.map_error(p.atom("atom"), lambda _: "atom"), name="map_error")
     assert_decorated(p.map_value(p.atom("atom"), lambda _: "atom"), name="map_value")
-    assert_decorated(p.skip1(p.atom("atom"), p.atom("atom")), name="skip1")
-    assert_decorated(p.skip2(p.atom("atom"), p.atom("atom")), name="skip2")
+    assert_decorated(p.skip_left(p.atom("atom"), p.atom("atom")), name="skip_left")
+    assert_decorated(p.skip_right(p.atom("atom"), p.atom("atom")), name="skip_right")
 
 
 def test_caching_strategy(monkeypatch: pytest.MonkeyPatch) -> None:

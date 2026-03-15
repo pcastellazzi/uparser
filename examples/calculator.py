@@ -30,7 +30,7 @@ def calc(operator: str, value1: float, value2: float) -> float:
 
 
 def token[S](parser: p.Parser[str, S]) -> p.Parser[str, S]:
-    return p.skip1(whitespace, parser)
+    return p.skip_left(whitespace, parser)
 
 
 number = p.regex(r"[+-]?\d+(\.\d+)?([eE][+-]?\d+)?")
@@ -51,8 +51,8 @@ expression_decl = p.choice(number, operation)
 expression_decl = p.set_error(expression_decl, "expected an expression")
 expression.set(expression_decl)
 
-parser = p.skip1(whitespace, expression)
-parser = p.skip2(parser, whitespace)
+parser = p.skip_left(whitespace, expression)
+parser = p.skip_right(parser, whitespace)
 parser = p.map_value(p.sequence(parser, p.eof()), lambda v: v[0])
 parser = p.set_error(parser, "expected an expression")
 

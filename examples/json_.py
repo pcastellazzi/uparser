@@ -15,7 +15,7 @@ whitespace = p.set(p.regex(RE_WHITESPACE), "whitespace", "whitespace")
 
 
 def token[S](parser: p.Parser[str, S]) -> p.Parser[str, S]:
-    return p.skip1(whitespace, parser)
+    return p.skip_left(whitespace, parser)
 
 
 def string2python(json_string: str) -> str:
@@ -40,14 +40,14 @@ string = token(string)
 
 
 def between[S](parser: p.Parser[str, S], *, left: str, right: str) -> p.Parser[str, S]:
-    return p.skip1(token(p.atom(left)), p.skip2(parser, token(p.atom(right))))
+    return p.skip_left(token(p.atom(left)), p.skip_right(parser, token(p.atom(right))))
 
 
 def comma_separated_list[S](parser: p.Parser[str, S]) -> p.Parser[str, list[S]]:
     comma = token(p.atom(","))
     element = p.map_value(parser, lambda v: [v])
-    csp = p.sequence(element, p.many0(p.skip1(comma, parser)))
-    csp = p.optional(csp, default=[])
+    csp = p.sequence(element, p.many0(p.skip_left(comma, parser)))
+    csp = p.option(csp, default=[])
     return p.map_value(csp, lambda v: v[0] + v[1] if v else [])
 
 
@@ -55,7 +55,7 @@ json_value: p.Reference[str, JSONValue] = p.Reference()
 
 array = between(comma_separated_list(json_value), left="[", right="]")
 pair: p.Parser[str, tuple[str, JSONValue]] = p.map_value(
-    p.sequence(p.skip2(string, token(p.atom(":"))), json_value),
+    p.sequence(p.skip_right(string, token(p.atom(":"))), json_value),
     lambda v: (typing.cast("str", v[0]), v[1]),
 )
 object_ = between(comma_separated_list(pair), left="{", right="}")
