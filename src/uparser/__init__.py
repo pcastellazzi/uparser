@@ -65,7 +65,7 @@ INFINITY = maxsize
 
 
 @final
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Failure[F]:
     """
     Container for failed results, errors in this context.
@@ -97,7 +97,7 @@ class Failure[F]:
 
 
 @final
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Success[S]:
     """
     Container for successful results, values in this context.
@@ -296,10 +296,11 @@ def bind[F, S, S1](
 
     @parser_hook(bind)
     def parser(index: int, text: str) -> State[F, S1]:
-        state = element(index, text)
-        if isinstance(state, Success):
-            return fn(state.value)(state.index, text)
-        return state
+        match element(index, text):
+            case Success(index, value):
+                return fn(value)(index, text)
+            case Failure() as failure:
+                return failure
 
     return parser
 
@@ -363,11 +364,11 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
     def parser(index: int, text: str) -> State[list[F], S]:
         failures: list[F] = []
         for option in options:
-            state = option(index, text)
-            if isinstance(state, Failure):
-                failures.append(state.error)
-            else:
-                return state
+            match option(index, text):
+                case Failure(_, error):
+                    failures.append(error)
+                case Success() as success:
+                    return success
         return Failure(index, failures)
 
     return parser
@@ -432,8 +433,6 @@ def repeat[F, S](
                     if iterations >= minimum:
                         break
                     return failure
-                case _ as other:
-                    assert_never(other)
 
         return Success(index, values)
 
@@ -472,12 +471,12 @@ def sequence[F, S](*elements: Parser[F, S]) -> Parser[F, list[S]]:
         successes: list[S] = []
 
         for element in elements:
-            state = element(current_index, text)
-            if isinstance(state, Success):
-                current_index = state.index
-                successes.append(state.value)
-            else:
-                return state
+            match element(current_index, text):
+                case Success(index, value):
+                    current_index = index
+                    successes.append(value)
+                case Failure() as failure:
+                    return failure
 
         return Success(current_index, successes)
 
@@ -561,16 +560,15 @@ def map_error[F, F1, S](
         >>> parser(0, "A")
         Success(index=1, value='A')
     """
-    return parser_hook(map_error)(
-        map(
-            element,
-            lambda state: (
-                Failure(state.index, mapper(state.error))
-                if isinstance(state, Failure)
-                else state
-            ),
-        )
-    )
+
+    def wrapper(state: State[F, S]) -> State[F1, S]:
+        match state:
+            case Failure(index, error):
+                return Failure(index, mapper(error))
+            case Success() as success:
+                return success
+
+    return parser_hook(map_error)(map(element, wrapper))
 
 
 def map_value[F, S, S1](
@@ -592,16 +590,15 @@ def map_value[F, S, S1](
         >>> parser(0, "B")
         Failure(index=0, error='A')
     """
-    return parser_hook(map_value)(
-        map(
-            element,
-            lambda state: (
-                Success(state.index, mapper(state.value))
-                if isinstance(state, Success)
-                else state
-            ),
-        )
-    )
+
+    def wrapper(state: State[F, S]) -> State[F, S1]:
+        match state:
+            case Success(index, value):
+                return Success(index, mapper(value))
+            case Failure() as failure:
+                return failure
+
+    return parser_hook(map_value)(map(element, wrapper))
 
 
 def set[F, S, F1, S1](element: Parser[F, S], error: F1, value: S1) -> Parser[F1, S1]:  # noqa: A001

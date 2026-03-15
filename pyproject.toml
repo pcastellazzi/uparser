@@ -55,8 +55,8 @@ classifiers = [
 dependencies = []
 
 [dependency-groups]
-dev = ["covdefaults>=2.3", "coverage>=7.7", "pytest-cov>=6.0", "pytest>=8.3"]
-docs = ["pdoc>=15.0.4"]
+dev = ["covdefaults>=2.3", "coverage>=7.7", "pytest-cov>=7.0", "pytest>=9.0"]
+docs = ["pdoc>=15.0"]
 
 [tool.pytest.ini_options]
 addopts = [

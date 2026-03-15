@@ -58,6 +58,18 @@ update-dependencies:
 	prek autoupdate
 
 
+# Only Microsoft's Pyright (VSCode) is capable of correctly type checking the
+# code (as of 2026.03.08). astral's ty is allmost there, but match stament
+# support is not complete. See: https://github.com/astral-sh/ty/issues/2742
+#
+# Others:
+# * mypy fails to understand the signature of parser_hook
+# * pyre does not understand type variables in most cases
+.PHONY: typecheck
+typecheck:
+	uvx ty check --error all $(PYTHON_CODE)
+
+
 .PHONY: integration
 integration: $(PYTHON_VERSIONS)
 
