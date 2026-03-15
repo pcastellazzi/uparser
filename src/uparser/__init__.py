@@ -418,9 +418,19 @@ def repeat[F, S](
         Failure(index=0, error='A')
         >>> parser4(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
+
+        >>> parser5 = p.repeat(p.atom("A"), 4, 2)
+        Traceback (most recent call last):
+        ...
+        ValueError: minimum (4) must be <= maximum (2)
     """
 
-    maximum = maximum or minimum
+    if maximum is None:
+        maximum = minimum
+
+    if minimum > maximum:
+        message = f"minimum ({minimum}) must be <= maximum ({maximum})"
+        raise ValueError(message)
 
     @parser_hook(repeat)
     def parser(index: int, text: str) -> State[F, list[S]]:
@@ -441,7 +451,7 @@ def repeat[F, S](
                 case _ as other:
                     assert_never(other)
 
-        return Success(index, values)
+        return Success(current_index, values)
 
     return parser
 
