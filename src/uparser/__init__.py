@@ -12,8 +12,9 @@ import uparser as p
 """
 
 from collections.abc import Callable
+from contextvars import ContextVar
 from dataclasses import dataclass
-from functools import cache, wraps
+from functools import wraps
 from re import Pattern
 from re import compile as re_compile
 from sys import maxsize
@@ -137,43 +138,45 @@ type Parser[F, S] = Callable[[int, str], State[F, S]]
 """The parser contract."""
 
 
-def parser_hook[F, S](
+def default_parser_hook[F, S](
     caller: Callable[..., Parser[F, S]],
 ) -> Callable[[Parser[F, S]], Parser[F, S]]:
     """
-    A decorator applied to all parsers created by the library.
-
-    This implementation uses [functools.wraps][] and [functools.cache][] to
-    enable a nice output when debugging and a caching mechanism to avoid
-    recalculations.
+    A decorator applied to all parsers created by the library. This is the
+    default implementation for [parser_hook][] which uses [functools.wraps][]
+    to give parsers easier to debug names.
 
     Parameters:
         caller: A parser generator.
-
-    Examples:
-        >>> import uparser as p
-        >>> original_parser_hook = p.parser_hook
-
-        >>> # Default behavior.
-        >>> parser = p.atom("A")
-        >>> parser.__name__
-        'atom'
-        >>> parser.cache_info()
-        CacheInfo(hits=0, misses=0, maxsize=None, currsize=0)
-
-        >>> # Disable the hook using an identity function.
-        >>> def disable_hooks(caller):
-        ...     return lambda p: p
-        >>> p.parser_hook = disable_hooks
-        >>> parser = p.atom("A")
-        >>> parser.__name__
-        'parser'
-        >>> hasattr(parser, "cache_info")
-        False
-
-        >>> p.parser_hook = original_parser_hook
     """
-    return lambda parser: wraps(caller)(cache(parser))
+    return wraps(caller)
+
+
+parser_hook = ContextVar("parser_hook", default=default_parser_hook)
+"""
+A decorator applied to all parsers created by the library. The default
+implementation is the identity function.
+
+
+Examples:
+    >>> import uparser as p
+
+    >>> # Default behavior.
+    >>> parser = p.atom("A")
+    >>> parser.__name__
+    'atom'
+
+    >>> # Custom hook
+    >>> from functools import lru_cache, wraps
+    >>> def my_parser_hook(caller):
+    >>>     return lambda parser: wraps(caller)(lru_cache(maxsize=32)(parser))
+    >>> with p.parser_hook.set(my_parser_hook):
+    >>>     parser = p.atom("A")
+    >>>     parser.__name__
+    'atom'
+    >>>     hasattr(parser, "cache_info")
+    True
+"""
 
 
 def run[F, S](element: Parser[F, S], text: str) -> S:
@@ -220,7 +223,7 @@ def atom(expected: str) -> Parser[str, str]:
         Success(index=2, value='if')
     """
 
-    @parser_hook(atom)
+    @parser_hook.get()(atom)
     def parser(index: int, text: str) -> State[str, str]:
         if text.startswith(expected, index):
             return Success(index + len(expected), expected)
@@ -249,7 +252,7 @@ def eof() -> Parser[str, str]:
         Success(index=0, value='')
     """
 
-    @parser_hook(eof)
+    @parser_hook.get()(eof)
     def parser(index: int, text: str) -> State[str, str]:
         if index >= len(text):
             return Success(index, "")
@@ -292,7 +295,7 @@ def regex(expression: str | Pattern[str]) -> Parser[str, str]:
 
     pattern = re_compile(expression)
 
-    @parser_hook(regex)
+    @parser_hook.get()(regex)
     def parser(index: int, text: str) -> State[str, str]:
         if match := pattern.match(text, index):
             return Success(match.end(), match.group(0))
@@ -328,7 +331,7 @@ def bind[F, S, S1](
         Failure(index=3, error='A')
     """
 
-    @parser_hook(bind)
+    @parser_hook.get()(bind)
     def parser(index: int, text: str) -> State[F, S1]:
         match element(index, text):
             case Success(index, value):
@@ -367,7 +370,7 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
         Failure(index=0, error=[])
     """
 
-    @parser_hook(choice)
+    @parser_hook.get()(choice)
     def parser(index: int, text: str) -> State[list[F], S]:
         failures: list[F] = []
         for option in options:
@@ -437,7 +440,7 @@ def repeat[F, S](
         message = f"minimum ({minimum}) must be <= maximum ({maximum})"
         raise ValueError(message)
 
-    @parser_hook(repeat)
+    @parser_hook.get()(repeat)
     def parser(index: int, text: str) -> State[F, list[S]]:
         current_index = index
         iterations = 0
@@ -487,7 +490,7 @@ def sequence[F, S](*elements: Parser[F, S]) -> Parser[F, list[S]]:
         Success(index=0, value=[])
     """
 
-    @parser_hook(sequence)
+    @parser_hook.get()(sequence)
     def parser(index: int, text: str) -> State[F, list[S]]:
         current_index = index
         successes: list[S] = []
@@ -529,7 +532,7 @@ def transform[F, S, F1, S1](
         Failure(index=0, error='\\\\d+')
     """
 
-    @parser_hook(transform)
+    @parser_hook.get()(transform)
     def parser(index: int, text: str) -> State[F1, S1]:
         return fn(element(index, text))
 
@@ -551,7 +554,7 @@ def many0[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
         >>> parser(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
     """
-    return parser_hook(many0)(repeat(element, 0, INFINITY))
+    return parser_hook.get()(many0)(repeat(element, 0, INFINITY))
 
 
 def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
@@ -569,7 +572,7 @@ def many1[F, S](element: Parser[F, S]) -> Parser[F, list[S]]:
         >>> parser(0, "AAAA")
         Success(index=4, value=['A', 'A', 'A', 'A'])
     """
-    return parser_hook(many1)(repeat(element, 1, INFINITY))
+    return parser_hook.get()(many1)(repeat(element, 1, INFINITY))
 
 
 def option[F, S](element: Parser[F, S], *, default: S) -> Parser[F, S]:
@@ -589,7 +592,7 @@ def option[F, S](element: Parser[F, S], *, default: S) -> Parser[F, S]:
         Success(index=1, value='A')
     """
 
-    return parser_hook(option)(
+    return parser_hook.get()(option)(
         map_value(repeat(element, 0, 1), lambda v: v[0] if v else default)
     )
 
@@ -623,7 +626,7 @@ def map_error[F, F1, S](
             case _ as other:
                 assert_never(other)
 
-    return parser_hook(map_error)(transform(element, wrapper))
+    return parser_hook.get()(map_error)(transform(element, wrapper))
 
 
 def map_value[F, S, S1](
@@ -655,7 +658,7 @@ def map_value[F, S, S1](
             case _ as other:
                 assert_never(other)
 
-    return parser_hook(map_value)(transform(element, wrapper))
+    return parser_hook.get()(map_value)(transform(element, wrapper))
 
 
 def set[F, S, F1, S1](element: Parser[F, S], error: F1, value: S1) -> Parser[F1, S1]:  # noqa: A001
@@ -686,7 +689,7 @@ def set[F, S, F1, S1](element: Parser[F, S], error: F1, value: S1) -> Parser[F1,
             case _ as other:
                 assert_never(other)
 
-    return parser_hook(set)(transform(element, mapper))
+    return parser_hook.get()(set)(transform(element, mapper))
 
 
 def set_error[F, F1, S](element: Parser[F, S], error: F1) -> Parser[F1, S]:
@@ -706,7 +709,7 @@ def set_error[F, F1, S](element: Parser[F, S], error: F1) -> Parser[F1, S]:
         >>> parser(0, "A")
         Success(index=1, value='A')
     """
-    return parser_hook(set_error)(map_error(element, lambda _: error))
+    return parser_hook.get()(set_error)(map_error(element, lambda _: error))
 
 
 def set_value[F, S, S1](element: Parser[F, S], value: S1) -> Parser[F, S1]:
@@ -726,7 +729,7 @@ def set_value[F, S, S1](element: Parser[F, S], value: S1) -> Parser[F, S1]:
         >>> parser(0, "B")
         Failure(index=0, error='A')
     """
-    return parser_hook(set_value)(map_value(element, lambda _: value))
+    return parser_hook.get()(set_value)(map_value(element, lambda _: value))
 
 
 def skip_left[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2]:
@@ -751,7 +754,7 @@ def skip_left[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S2
         >>> parser(0, "ABCD1234")
         Success(index=8, value='1234')
     """
-    return parser_hook(skip_left)(bind(one, lambda _: two))
+    return parser_hook.get()(skip_left)(bind(one, lambda _: two))
 
 
 def skip_right[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S1]:
@@ -776,7 +779,7 @@ def skip_right[F, S1, S2](one: Parser[F, S1], two: Parser[F, S2]) -> Parser[F, S
         >>> parser(0, "ABCD1234")
         Success(index=8, value='ABCD')
     """
-    return parser_hook(skip_right)(
+    return parser_hook.get()(skip_right)(
         bind(one, lambda value1: map_value(two, lambda _: value1))
     )
 

@@ -1,7 +1,4 @@
-from collections.abc import Callable
 from itertools import chain
-
-import pytest
 
 import uparser as p
 
@@ -27,8 +24,6 @@ UTIL = "parser_hook", "Reference"
 def assert_decorated[F, S](parser: p.Parser[F, S], *, name: str) -> None:
     # functools.wraps applied correctly
     assert getattr(parser, "__name__", "<unknown>") == name
-    # functools.cache applied correctly
-    assert hasattr(parser, "cache_info")
 
 
 def test_public_api_visibility() -> None:
@@ -59,15 +54,3 @@ def test_parsers_should_be_decorated() -> None:
     assert_decorated(p.map_value(p.atom("atom"), lambda _: "atom"), name="map_value")
     assert_decorated(p.skip_left(p.atom("atom"), p.atom("atom")), name="skip_left")
     assert_decorated(p.skip_right(p.atom("atom"), p.atom("atom")), name="skip_right")
-
-
-def test_caching_strategy(monkeypatch: pytest.MonkeyPatch) -> None:
-    def disable_caching[F, S](
-        _: Callable[..., p.Parser[F, S]],
-    ) -> Callable[[p.Parser[F, S]], p.Parser[F, S]]:
-        return lambda parser: parser
-
-    # Setting `uparser.cache` is expected behavior. `pytest.MonkeyPatch` is
-    # used to automatically undo the change when this test finishes.
-    monkeypatch.setattr(p, "parser_hook", disable_caching)
-    assert not hasattr(p.atom("atom"), "cache_info")
