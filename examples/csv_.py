@@ -18,7 +18,7 @@ field = p.map_value(field, strip_quotes)
 field = p.set_error(field, "expected a field")
 
 a_field = p.map_value(field, lambda v: [v])
-n_field = p.many0(p.skip1(a_comma, field))
+n_field = p.many0(p.skip_left(a_comma, field))
 record = p.sequence(a_field, n_field)
 record = p.map_value(record, lambda v: v[0] + v[1])
 record = p.set_error(record, "expected a record")
@@ -29,7 +29,7 @@ eof = p.set_value(eof, cast("list[list[str]]", []))
 csv = p.map_value(
     p.sequence(
         p.map_value(record, lambda v: [v]),
-        p.many0(p.skip1(a_crlf, record)),
+        p.many0(p.skip_left(a_crlf, record)),
         eof,
     ),
     lambda v: v[0] + v[1],
