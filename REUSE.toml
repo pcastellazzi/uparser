@@ -12,6 +12,7 @@ path = [
     ".cspell.dictionary.txt",
     ".cspell.json",
     ".gitignore",
+    ".markdownlint.json",
     ".pdoc-theme/**",
     ".python-version",
     "conftest.py",

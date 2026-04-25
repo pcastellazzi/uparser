@@ -1,0 +1,27 @@
+{
+  "code-block-style": {
+    "style": "fenced"
+  },
+
+  "code-fence-style": {
+    "style": "backtick"
+  },
+
+  "fenced-code-language": {
+    "allowed_languages": [
+      "bash",
+      "python",
+      "text",
+    ],
+    "language_only": true
+  },
+
+  "line-length": {
+    "strict": true,
+    "code_blocks": false
+  },
+
+  "no-duplicate-heading": {
+    "siblings_only": true
+  }
+}
