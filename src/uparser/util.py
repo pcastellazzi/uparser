@@ -58,11 +58,13 @@ class Reference[F, S]:
         Success(index=7, value=['{', ['{', ['{', '0', '}'], '}'], '}'])
     """
 
+    __slots__ = ("_reference",)
+
     def __init__(self) -> None:
         self._reference: Parser[F, S] | None = None
 
     def __call__(self, index: int, text: str) -> State[F, S]:
-        if self._reference:
+        if self._reference is not None:
             return self._reference(index, text)
         message = "reference not set"
         raise ValueError(message)
