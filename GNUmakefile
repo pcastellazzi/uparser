@@ -40,7 +40,7 @@ test:
 .PHONY: update-dependencies
 update-dependencies:
 	uv sync --all-groups --upgrade
-	prek autoupdate
+	prek auto-update --freeze
 
 
 .PHONY: integration
