@@ -153,9 +153,11 @@ def repeat[F, S](
         while iterations < maximum:
             match element(current_index, text):
                 case Success(index, value):
-                    current_index = index
                     values.append(value)
                     iterations += 1
+                    if index == current_index:
+                        break
+                    current_index = index
                 case Failure() as failure:
                     if iterations >= minimum:
                         break
