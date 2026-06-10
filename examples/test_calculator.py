@@ -29,10 +29,10 @@ def test_calculate_success(equation: str, expected: float) -> None:
     [
         ("", "Error: expected an expression at position 0"),
         ("1 2", "Error: expected an expression at position 2"),
-        ("+ 1", "Error: expected an expression at position 0"),
+        ("+ 1", "Error: expected an expression at position 3"),
         ("+ 1 2 3", "Error: expected an expression at position 6"),
         ("?", "Error: expected an expression at position 0"),
-        ("+ 1 ?", "Error: expected an expression at position 0"),
+        ("+ 1 ?", "Error: expected an expression at position 4"),
     ],
 )
 def test_calculate_failure(equation: str, error_message: str) -> None:

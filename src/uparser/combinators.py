@@ -48,12 +48,12 @@ def bind[F, S, S1](
     return parser
 
 
-def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
+def choice[F, S](*options: Parser[F, S]) -> Parser[F, S]:
     """
     A parser for an ordered choice.
 
-    The first [uparser.Success][] is returned immediately. Otherwise a
-    [uparser.Failure][] with the accumulated errors is returned.
+    The first [uparser.Success][] is returned immediately. Otherwise the
+    [uparser.Failure][] from the last parser is returned.
 
     Parameters:
         options: One or more parsers to evaluate in order.
@@ -62,7 +62,7 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
         >>> # A parser to match "A" or "B".
         >>> parser = p.choice(p.atom("A"), p.atom("B"))
         >>> parser(0, "CC")
-        Failure(index=0, error=['A', 'B'])
+        Failure(index=0, error='B')
         >>> parser(0, "BB")
         Success(index=1, value='B')
         >>> parser(0, "AA")
@@ -70,23 +70,30 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[list[F], S]:
 
         >>> # An empty choice is an automatic failure.
         >>> parser = p.choice()
-        >>> parser(0, "AA")
-        Failure(index=0, error=[])
+        Traceback (most recent call last):
+        ...
+        ValueError: choice requires at least one parser
     """
 
+    if not options:
+        message = "choice requires at least one parser"
+        raise ValueError(message)
+
     @parser_hook.get()(choice)
-    def parser(index: int, text: str) -> State[list[F], S]:
-        failures: list[F] = []
+    def parser(index: int, text: str) -> State[F, S]:
+        last_failure: Failure[F] | None = None
+
         for option in options:
             match option(index, text):
-                case Failure(_, error):
-                    failures.append(error)
+                case Failure() as failure:
+                    last_failure = failure
                 case Success() as success:
                     return success
                 case _ as other:
                     assert_never(other)
 
-        return Failure(index, failures)
+        assert last_failure  # noqa: S101
+        return last_failure
 
     return parser
 
