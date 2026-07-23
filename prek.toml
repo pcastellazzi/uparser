@@ -4,7 +4,7 @@
 
 [[repos]]
 repo = "https://github.com/google/osv-scanner/"
-rev = "30bcc134e23fbc35731021ee43ec433c483715d7" # frozen: v2.3.5
+rev = "b56b5191101d5f27d4787d5583d8d01e9518a7af" # frozen: v2.4.0
 
 [[repos.hooks]]
 id = "osv-scanner"
@@ -21,16 +21,21 @@ rev = "a1bb792acda6fd0724936b4ebbdbc8eceb9c0459" # frozen: v6.2.0
 hooks = [{id = "reuse-lint-file"}]
 
 [[repos]]
-repo = "https://github.com/astral-sh/uv-pre-commit"
-rev = "6a280ba12b7901e47757c868c8c13c6a624c9ecb" # frozen: 0.11.7
-hooks = [{id = "uv-lock"}, {id = "uv-sync"}]
+repo = "https://github.com/DavidAnson/markdownlint-cli2"
+rev = "534166213006ec869b773b7ed8c6ebeaad1165d0" # frozen: v0.23.0
+hooks = [{id = "markdownlint-cli2"}]
 
 [[repos]]
 repo = "https://github.com/astral-sh/ruff-pre-commit"
-rev = "6fec9b7edb08fd9989088709d864a7826dc74e80" # frozen: v0.15.12
+rev = "01a675ea018f2fb714478a5ffb83fcea8374bb06" # frozen: v0.15.21
 hooks = [{id = "ruff-check"}, {id = "ruff-format"}]
 
 [[repos]]
-repo = "https://github.com/DavidAnson/markdownlint-cli2"
-rev = "996abf60411a8d954288ac9856aae7602b80cbda" # frozen: v0.22.1
-hooks = [{id = "markdownlint-cli2"}]
+repo = "https://github.com/astral-sh/ty-pre-commit"
+rev = "7f8502eb16c9a4b600cfb7fb069ae1154e21fbf9" # frozen: v0.0.60
+hooks = [{id = "ty"}]
+
+[[repos]]
+repo = "https://github.com/astral-sh/uv-pre-commit"
+rev = "b7359babf83a050dcd7bf892538f3df09c3d4ba6" # frozen: 0.11.29
+hooks = [{id = "uv-lock"}, {id = "uv-sync"}]

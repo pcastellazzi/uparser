@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from sys import maxsize
-from typing import assert_never
 
 from uparser.core import Failure, Parser, State, Success, parser_hook
 
@@ -42,8 +41,6 @@ def bind[F, S, S1](
                 return fn(value)(index, text)
             case Failure() as failure:
                 return failure
-            case _ as other:
-                assert_never(other)
 
     return parser
 
@@ -89,8 +86,6 @@ def choice[F, S](*options: Parser[F, S]) -> Parser[F, S]:
                     last_failure = failure
                 case Success() as success:
                     return success
-                case _ as other:
-                    assert_never(other)
 
         assert last_failure  # noqa: S101
         return last_failure
@@ -169,8 +164,6 @@ def repeat[F, S](
                     if iterations >= minimum:
                         break
                     return failure
-                case _ as other:
-                    assert_never(other)
 
         return Success(current_index, values)
 
@@ -215,8 +208,6 @@ def sequence[F, S](*elements: Parser[F, S]) -> Parser[F, list[S]]:
                     successes.append(value)
                 case Failure() as failure:
                     return failure
-                case _ as other:
-                    assert_never(other)
 
         return Success(current_index, successes)
 

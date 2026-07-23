@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass
-from functools import wraps
+from functools import update_wrapper
 from typing import final
 
 
@@ -76,18 +76,22 @@ type Parser[F, S] = Callable[[int, str], State[F, S]]
 """The parser contract."""
 
 
-def default_parser_hook[F, S](
-    caller: Callable[..., Parser[F, S]],
+def default_parser_hook[**P, F, S](
+    caller: Callable[P, Parser[F, S]],
 ) -> Callable[[Parser[F, S]], Parser[F, S]]:
     """
     A decorator applied to all parsers created by the library. This is the
-    default implementation for [parser_hook][] which uses [functools.wraps][]
-    to give parsers easier to debug names.
+    default implementation for [parser_hook][] which uses
+    [functools.update_wrapper][] to give parsers easier to debug names.
 
     Parameters:
         caller: A parser generator.
     """
-    return wraps(caller)
+
+    def decorator(parser: Parser[F, S]) -> Parser[F, S]:
+        return update_wrapper(parser, caller)
+
+    return decorator
 
 
 parser_hook = ContextVar("parser_hook", default=default_parser_hook)
